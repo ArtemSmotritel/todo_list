@@ -1,105 +1,76 @@
-const { client } = require('../database/client');
+const { makeRequest } = require('../database/client');
 
 class TaskModel {
     async find(listId, done) {
-        let list;
-        try {
-            const data = await client.query("select * from tasks where list_id=$1 and (done=false or done=$2)", [listId, done]);
-            if (data.rowCount == 0) {
-                return 'error';
-            }
-            list = data.rows;
-        } catch (error) {
-            console.log(error);
-        }
+        const query =
+            "select * from tasks " +
+            "where list_id=$1 and (done=false or done=$2)";
+        const requestValues = [listId, done];
+        const list = await makeRequest(query, requestValues);
 
-        return list;
+        return list.rows;
     }
     async findById(id) {
-        let task;
-        try {
-            const data = await client.query("select * from tasks where id=$1", [id]);
-            task = data.rows[0];
-        } catch (error) {
-            console.log(error);
-        }
+        const query = "select * from tasks where id=$1";
+        const requestValues = [id];
+        const task = await makeRequest(query, requestValues);
 
-        return task;
+        return task.rows[0];
     }
     async create(listId, newTask) {
-        try {
-            const requestValues = [newTask.description, newTask.done || false, listId, newTask.dueDate || new Date()];
-            const data = await client.query("insert into tasks (description, done, list_id, due_date) values ($1, $2, $3, $4)", requestValues);
-        } catch (error) {
-            console.log(error);
-        }
+        const query = "insert into tasks (description, done, list_id, due_date) values ($1, $2, $3, $4)";
+        const requestValues = [newTask.description, newTask.done || false, listId, newTask.dueDate || new Date()];
+        await makeRequest(query, requestValues);
 
         return (await this.find(listId)).slice(-1)[0]; // returning the last added task to the list 
     }
     async partialUpdateById(id, update) {
-        try {
-            const { list_id, description, due_date } = await this.findById(id);
-            const requestValues = [update.description || description, update.done || false, update.listId || list_id, update.dueDate || due_date, id];
-            await client.query("update tasks set description = $1, done = $2, list_id = $3, due_date = $4 where id=$5", requestValues);
-        } catch (error) {
-            console.log(error);
-        }
+        const query = "update tasks set description = $1, done = $2, list_id = $3, due_date = $4 where id=$5";
+        const requestValues = [update.description || description, update.done || false, update.listId || list_id, update.dueDate || due_date, id];
+        await makeRequest(query, requestValues);
 
         return this.findById(id);
     }
     async replaceById(id, update) {
+        const query = "update tasks set description = $1, done = $2, list_id = $3, due_date = $4 where id=$5";
         const requestValues = [update.description || 'default task', update.done || false, update.listId || 1, update.dueDate || new Date(), id];
-        try {
-            await client.query("update tasks set description = $1, done = $2, list_id = $3, due_date = $4 where id=$5", requestValues);
-        } catch (error) {
-            console.log(error);
-        }
+        await makeRequest(query, requestValues);
 
         return this.findById(id);
     }
     async deleteById(id) {
-        try {
-            await client.query("delete from tasks where id=$1", [id]);
-        } catch (error) {
-            console.log(error);
-        }
+        const query = "delete from tasks where id=$1";
+        const requestValues = [id];
+        await makeRequest(query, requestValues);
     }
     async countTasksToday() {
-        let result;
         const today = new Date();
-        try {
-            const taskCount = await client
-                .query("select count(*) from tasks " +
-                    "where due_date between $1 and $2", [today, today]);
-            const taskCountByList = await client
-                .query("select count(tasks.id) as tasks_count, lists.name as list_name " +
-                    "from tasks right join lists on tasks.list_id = lists.id " +
-                    "where tasks.done = false group by lists.name");
-            
-            result = {
-                tasks_for_today: taskCount.rows[0],
-                undone_tasks_by_list: taskCountByList.rows,
-            };
-        } catch (error) {
-            console.log(error);
-        }
+        const query =
+            "select count(*) from tasks " +
+            "where due_date between $1 and $2";
+        const requestValues = [today, today];
+        const taskCount = await makeRequest(query, requestValues);
 
-        return result;
+        const query2 =
+            "select count(tasks.id) as tasks_count, lists.name as list_name " +
+            "from tasks right join lists on tasks.list_id = lists.id " +
+            "where tasks.done = false group by lists.name";
+        const taskCountByList = await makeRequest(query2);
+
+        return {
+            tasks_for_today: taskCount.rows[0].count,
+            undone_tasks_by_list: taskCountByList.rows,
+        };
     }
     async tasksForTheDay(day) {
-        let result;
-        try {
-            const data = await client
-                .query("select tasks.description, tasks.done, tasks.id, lists.name as list_name " +
-                    "from tasks right join lists on tasks.list_id = lists.id " + 
-                    "where tasks.due_date between $1 and $2", [day, day]);
-            result = data.rows;
-        } catch (error) {
-            console.log(error);
-        }
-
-        return result;
+        const query =
+            "select tasks.description, tasks.done, tasks.id, lists.name as list_name " +
+            "from tasks right join lists on tasks.list_id = lists.id " +
+            "where tasks.due_date between $1 and $2";
+        const requestValues = [day, day];
+        const result = await makeRequest(query, requestValues);
+        return result.rows;
     }
 }
 
-module.exports = new TaskModel(); //ex
+module.exports = new TaskModel();
