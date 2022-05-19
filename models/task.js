@@ -25,8 +25,15 @@ class TaskModel {
         return (await this.find(listId)).slice(-1)[0]; // returning the last added task to the list 
     }
     async partialUpdateById(id, update) {
+        let newDone;
+        const { description, list_id, due_date, done } = await this.findById(id);
         const query = "update tasks set description = $1, done = $2, list_id = $3, due_date = $4 where id=$5";
-        const requestValues = [update.description || description, update.done || false, update.listId || list_id, update.dueDate || due_date, id];
+        if (update.done === false || update.done === true) {
+            newDone = update.done; // done = new done prop if any 
+        } else {
+            newDone = done; // done = already existing value in db
+        }
+        const requestValues = [update.description || description, newDone, update.listId || list_id, update.dueDate || due_date, id];
         await makeRequest(query, requestValues);
 
         return this.findById(id);
