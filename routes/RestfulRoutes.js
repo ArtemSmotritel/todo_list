@@ -13,8 +13,8 @@ function RestfulRoutes(router, controller) {
     })
     router.get('/', async (req, res) => {
         const data = await controller.find(listId, done);
-        if (data === 'noSuchList') {
-            res.status(404).json('No such list found');
+        if (data === 'error') {
+            res.status(404).json('Error');
         }
         else {
             res.json(data);
@@ -25,7 +25,7 @@ function RestfulRoutes(router, controller) {
         if (data) {
             res.json(data);
         } else {
-            res.status(404).json('No such task found');
+            res.status(404).json('Error');
         }
     })
     router.post('/', async (req, res) => {

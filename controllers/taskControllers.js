@@ -19,6 +19,12 @@ class TaskController {
     deleteById(id) {
         return TaskModel.deleteById(id);
     }
+    countTasksToday() {
+        return TaskModel.countTasksToday();
+    }
+    tasksForTheDay(day) {
+        return TaskModel.tasksForTheDay(day);
+    }
 }
 
 module.exports = new TaskController();
