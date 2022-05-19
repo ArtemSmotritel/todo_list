@@ -1,8 +1,8 @@
 const TaskModel = require('../models/task');
 
 class TaskController {
-    find(listId) {
-        return TaskModel.find(listId);
+    find(listId, done) {
+        return TaskModel.find(listId, done);
     }
     findById(id) {
         return TaskModel.findById(id);

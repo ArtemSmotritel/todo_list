@@ -1,10 +1,16 @@
 const { client } = require('../database/client');
 
+const options = {
+    year: numeric,
+    month: numeric,
+    day: numeric,
+}
+
 class TaskModel {
-    async find(listId) {
+    async find(listId, done) {
         let list;
         try {
-            const data = await client.query("select * from tasks where list_id=$1", [listId]);
+            const data = await client.query("select * from tasks where list_id=$1 and (done=false or done=$2)", [listId, done]);
             if (data.rowCount == 0) {
                 return 'noSuchList';
             }
@@ -57,6 +63,18 @@ class TaskModel {
         } catch (error) {
             console.log(error);
         }
+    }
+    async countTasksToday() {
+        let count;
+        const prevDay = new Date(new Date().getDate() - 1);
+
+        try {
+            const data = await client.query("select count(*) from tasks where due_date between $1 and $2", [prevDay,]);
+            count = data.rows[0];
+        } catch (error) {
+            console.log(error);
+        }
+        return count;
     }
 }
 

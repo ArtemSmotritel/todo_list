@@ -1,23 +1,22 @@
 //const express = require('express');
 
 function RestfulRoutes(router, controller) {
-    let listId;
+    let listId, done;
     router.all('*', (req, res, next) => {
         if (req.query.listId) {
             listId = +req.query.listId;
         } else {
             listId = +req.originalUrl.split('/')[2]; //getting listId param from /lists/:listId/tasks
         }
+        done = req.query.all == 'true';        
         next();
     })
     router.get('/', async (req, res) => {
-        const data = await controller.find(listId);
+        const data = await controller.find(listId, done);
         if (data === 'noSuchList') {
             res.status(404).json('No such list found');
         }
-        else if (data.length === 0) {
-            res.json('This list is empty');
-        } else {
+        else {
             res.json(data);
         }
     })
