@@ -1,5 +1,3 @@
-//const express = require('express');
-
 function RestfulRoutes(router, controller) {
     let listId;
     router.all('*', (req, res, next) => {
@@ -13,12 +11,7 @@ function RestfulRoutes(router, controller) {
     router.get('/', async (req, res) => {
         const done = req.query.all == 'true';
         const data = await controller.find(listId, done);
-        if (data === 'error') {
-            res.status(404).json('Error');
-        }
-        else {
-            res.json(data);
-        }
+        res.json(data);
     })
     router.get('/:id', async (req, res) => {
         const data = await controller.findById(req.params.id);
