@@ -1,7 +1,7 @@
 const express = require('express');
 const app = express();
 const router = require('./routes/index');
-const { connectToDb, disconnectFromDb } = require('./database/client');
+const { connectToDb } = require('./database/client');
 
 function logRequest({ method, url }, res, next) {
     console.log(`[${new Date().toISOString()}] ${method} ${url}`);

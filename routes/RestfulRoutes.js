@@ -1,5 +1,3 @@
-//const express = require('express');
-
 function RestfulRoutes(router, controller) {
     let listId;
     router.all('*', (req, res, next) => {
@@ -12,37 +10,56 @@ function RestfulRoutes(router, controller) {
     })
     router.get('/', async (req, res) => {
         const done = req.query.all == 'true';
-        const data = await controller.find(listId, done);
-        if (data === 'error') {
-            res.status(404).json('Error');
-        }
-        else {
+        try {
+            const data = await controller.find(listId, done);
             res.json(data);
+        } catch (error) {
+            res.status(500).json('something went very wrong');
         }
     })
     router.get('/:id', async (req, res) => {
-        const data = await controller.findById(req.params.id);
-        if (data) {
-            res.json(data);
-        } else {
-            res.status(404).json('Error');
-        }
+        try {
+            const data = await controller.findById(req.params.id);
+            if (data) {
+                res.json(data);
+            } else {
+                res.status(404).json('not found');
+            }    
+        } catch (error) {
+            res.status(500).json('something went very wrong');
+        }        
     })
     router.post('/', async (req, res) => {
-        const data = await controller.create(listId, req.body);
-        res.status(201).json(data);
+        try {
+            const data = await controller.create(listId, req.body);
+            res.status(201).json(data);            
+        } catch (error) {
+            res.status(500).json('something went very wrong');
+        }
     })
     router.patch('/:id', async (req, res) => {
-        const data = await controller.partialUpdateById(req.params.id, req.body);
-        res.json(data);
+        try {
+            const data = await controller.partialUpdateById(req.params.id, req.body);
+            res.json(data);            
+        } catch (error) {
+            res.status(500).json('something went very wrong');
+        }
     })
     router.put('/:id', async (req, res) => {
-        const data = await controller.replaceById(req.params.id, req.body);
-        res.json(data);
+        try {
+            const data = await controller.replaceById(req.params.id, req.body);
+            res.json(data);            
+        } catch (error) {
+            res.status(500).json('something went very wrong');
+        }
     })
     router.delete('/:id', async (req, res) => {
-        await controller.deleteById(req.params.id);
-        res.status(204).json('OK');
+        try {
+            await controller.deleteById(req.params.id);
+            res.status(204).json('OK');            
+        } catch (error) {
+            res.status(500).json('something went very wrong');
+        }
     })
 }
 
