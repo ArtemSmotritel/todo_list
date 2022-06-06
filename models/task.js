@@ -23,8 +23,8 @@ class TaskModel {
             done: newTask.done || false,
             due_date: newTask.due_date,
         }
-
-        await knex('tasks').insert(task);
+        const id = await knex('tasks').insert(task, ['id']);
+        return id[0];
     }
     async partialUpdateById(id, update) {
         const { description, list_id, due_date, done, name } = await this.findById(id);        
