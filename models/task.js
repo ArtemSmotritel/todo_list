@@ -2,7 +2,13 @@ const { knex } = require('../database/knex');
 
 class TaskModel {
     async find(listId, done) {
-        const list = await knex('tasks').where('list_id', listId).whereIn('done', [false, done]);
+        const list = await knex('tasks').where('list_id', listId).andWhere(function () {
+            if (done) {
+                this.whereIn('done', [false, true]);
+            } else {
+                this.where('done', false);
+            }
+        });
         return list;
     }
     async findById(id) {
@@ -11,17 +17,18 @@ class TaskModel {
     }
     async create(listId, newTask) {
         const task = {
+            name: newTask.name,
             description: newTask.description,
             list_id: listId,
             done: newTask.done || false,
-            due_date: newTask.dueDate || new Date(),
+            due_date: newTask.dueDate,
         }
 
-        await knex('tasks').insert(task)[0];
+        await knex('tasks').insert(task);
     }
     async partialUpdateById(id, update) {
         let newDone;
-        const { description, list_id, due_date, done } = await this.findById(id);
+        const { description, list_id, due_date, done, name } = await this.findById(id);
         if (update.done === false || update.done === true) {
             newDone = update.done; // done = new done prop if any 
         } else {
@@ -29,8 +36,9 @@ class TaskModel {
         }
 
         await knex('tasks').where('id', id).update({
+            name: update.name || name,
             description: update.description || description,
-            done: newDone,
+            done: update.done ?? done,
             list_id: update.listId || list_id,
             due_date: update.dueDate || due_date,
         })
@@ -48,15 +56,17 @@ class TaskModel {
         return this.findById(id);
     }
     async deleteById(id) {
-        knex('tasks').where('id', id).del();
+        await knex('tasks').where('id', id).del();
     }
     async countTasksToday() {
         const today = new Date();
         const taskCount = await knex('tasks').count('id').whereBetween('due_date', [today, today]);
+
         const taskCountByList = await knex('tasks')
-            .count('tasks.id as tasks_count').select('lists.name as list_name')
-            .rightJoin('lists', 'tasks.list_id', 'lists.id')
-            .where('tasks.done', false)
+            .select('lists.name as list_name').count('tasks.id as tasks_count')
+            .rightJoin('lists', function () {
+                this.on('tasks.list_id', '=', 'lists.id').onNotIn('tasks.done', [true])
+            })
             .groupBy('lists.name');
 
         return {

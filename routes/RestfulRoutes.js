@@ -11,8 +11,8 @@ function RestfulRoutes(router, controller) {
     router.get('/', async (req, res) => {
         try {
             const done = req.query.all == 'true';
-            const data = await controller.find(listId, done);
-            res.json(data);            
+            const data = await controller.find(listId, done);            
+            res.json(data);
         } catch (error) {
             res.status(500).json('something went very wrong...')
         }
@@ -40,7 +40,7 @@ function RestfulRoutes(router, controller) {
     router.patch('/:id', async (req, res) => {
         try {
             const data = await controller.partialUpdateById(req.params.id, req.body);
-            res.json(data);            
+            res.json(data);
         } catch (error) {
             res.status(500).json('something went very wrong...')
         }
