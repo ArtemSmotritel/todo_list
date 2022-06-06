@@ -21,19 +21,13 @@ class TaskModel {
             description: newTask.description,
             list_id: listId,
             done: newTask.done || false,
-            due_date: newTask.dueDate,
+            due_date: newTask.due_date,
         }
 
         await knex('tasks').insert(task);
     }
     async partialUpdateById(id, update) {
-        let newDone;
-        const { description, list_id, due_date, done, name } = await this.findById(id);
-        if (update.done === false || update.done === true) {
-            newDone = update.done; // done = new done prop if any 
-        } else {
-            newDone = done; // done = already existing value in db
-        }
+        const { description, list_id, due_date, done, name } = await this.findById(id);        
 
         await knex('tasks').where('id', id).update({
             name: update.name || name,
